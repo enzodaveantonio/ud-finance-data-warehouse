@@ -192,5 +192,5 @@ load_<layer>
 
 ---
 
-For layer design details, refer to `docs/data_management_approach.md`.
+For layer design details, refer to `02_docs/data_management_approach.md`.
 For table schemas, refer to `deposits_recon.sql` and `bank_recon.sql`.
