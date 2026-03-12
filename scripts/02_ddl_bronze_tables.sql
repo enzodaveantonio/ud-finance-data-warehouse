@@ -18,20 +18,40 @@ Usage:
 ================================================================================
 */
 
-IF OBJECT_ID('bronze.erp_sap_gl', 'U') IS NOT NULL
-	DROP TABLE bronze.erp_sap_gl;
+/*
+================================================================================
+1. If the system detects that 'bronze.erp_sap_je' exists, DROP TABLE removes the table. After, it creates another table named 'bronze.erp_sap_je'
+================================================================================
+*/
 
-CREATE TABLE bronze.erp_sap_gl(
-	company_code NVARCHAR(50),
+IF OBJECT_ID('bronze.erp_sap_je', 'U') IS NOT NULL
+	DROP TABLE bronze.erp_sap_je;
+
+CREATE TABLE bronze.erp_sap_je(
+	cleared_open_items_symbol NVARCHAR(50),
+	company_code NVARCHAR(20),
 	account NVARCHAR(20),
 	document_number NVARCHAR(50),
 	document_type NVARCHAR(10),
+	document_date DATE,
 	posting_date DATE,
-	reference_key NVARCHAR(50),
-	amount DECIMAL(18, 2),
-	currency NVARCHAR(10),
+	reference_key_3 NVARCHAR(50),
+	amount_in_local_currency NVARCHAR(30),
+	local_currency NVARCHAR(10),
+	tax_code NVARCHAR(10),
+	clearing_document NVARCHAR(30),
+	je_text NVARCHAR(300),
+	profit_center NVARCHAR(10),
+	cost_center NVARCHAR(10),
 	transaction_code NVARCHAR(50)
 );
+
+/*
+================================================================================
+2. If the system detects that 'bronze.core_tm_sl_aggregates' exists, DROP TABLE removes the table. After, it creates another table named 'bronze.core_tm_sl_aggregates'
+================================================================================
+*/
+
 
 IF OBJECT_ID('bronze.core_tm_sl_aggregates', 'U') IS NOT NULL
 	DROP TABLE bronze.core_tm_sl_aggregates;
