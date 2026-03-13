@@ -46,7 +46,8 @@ CREATE TABLE silver.erp_sap_je(
 	posting_date DATE,
 	is_prior_period_adjustment NVARCHAR(5),
 	reference_key_3 NVARCHAR(50),
-	amount_in_local_currency DECIMAL(18, 2),
+	amount_dr DECIMAL(18, 2),
+	amount_cr DECIMAL(18, 2),
 	local_currency NVARCHAR(10),
 	tax_code NVARCHAR(10),
 	clearing_document NVARCHAR(30),
@@ -54,6 +55,7 @@ CREATE TABLE silver.erp_sap_je(
 	profit_center NVARCHAR(10),
 	cost_center NVARCHAR(10),
 	transaction_code NVARCHAR(50),
+	is_deposit_reversal NVARCHAR(10),
 	dwh_create_date DATETIME2 DEFAULT GETDATE(),
     dwh_source_file NVARCHAR(255)
 );
@@ -79,3 +81,8 @@ CREATE TABLE silver.core_tm_sl_aggregates(
 	dwh_create_date DATETIME2 DEFAULT GETDATE(),
     dwh_source_file NVARCHAR(255)
 );
+
+USE UDFinanceWarehouse
+
+
+
