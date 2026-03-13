@@ -79,7 +79,8 @@ BEGIN
         posting_date,
         is_prior_period_adjustment,
         reference_key_3,
-        amount_in_local_currency,
+        amount_dr,
+        amount_cr,
         local_currency,
         tax_code,
         clearing_document,
@@ -87,6 +88,7 @@ BEGIN
         profit_center,
         cost_center,
         transaction_code,
+        is_deposit_reversal,
         dwh_source_file
     )
 
@@ -125,14 +127,42 @@ BEGIN
 	    END AS is_prior_period_adjustment,
         reference_key_3,
 
-        CAST(REPLACE(amount_in_local_currency, ',', '') AS DECIMAL(18, 2)) AS amount_in_local_currency,
+        CASE WHEN CAST(REPLACE(amount_in_local_currency, ',', '') AS DECIMAL(18,2)) > 0
+            THEN CAST(REPLACE(amount_in_local_currency, ',', '') AS DECIMAL(18,2))
+            ELSE NULL
+        END AS amount_dr,
+
+        CASE WHEN CAST(REPLACE(amount_in_local_currency, ',', '') AS DECIMAL(18,2)) < 0
+            THEN ABS(CAST(REPLACE(amount_in_local_currency, ',', '') AS DECIMAL(18,2)))
+            ELSE NULL
+        END AS amount_cr,
+
         local_currency,
         tax_code,
         clearing_document,
         je_text,
         profit_center,
         cost_center,
-        transaction_code,
+        
+        CASE WHEN account = '2121199' 
+            AND (transaction_code LIKE 'IPTKOT%' 
+            OR transaction_code LIKE 'ITMDIP%'
+            OR transaction_code LIKE 'RTMDET%')
+            THEN LEFT(transaction_code, LEN(transaction_code)-1)
+            ELSE transaction_code
+        END AS transaction_code,
+
+        CASE WHEN (transaction_code LIKE 'IPTKOT%'
+            OR transaction_code LIKE 'ITMDIP%'
+            OR transaction_code LIKE 'RTMDET%')
+            AND RIGHT(transaction_code, 1) = '1' THEN 'Yes'
+            WHEN (transaction_code LIKE 'IPTKOT%'
+            OR transaction_code LIKE 'ITMDIP%'
+            OR transaction_code LIKE 'RTMDET%')
+            AND RIGHT(transaction_code, 0) = '0' THEN 'No'
+            ELSE NULL
+        END AS is_deposit_reversal,
+
         'sap_je.csv' AS dwh_source_file
 
 
