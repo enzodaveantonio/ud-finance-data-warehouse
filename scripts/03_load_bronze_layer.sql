@@ -69,18 +69,19 @@ BEGIN
 
 /*
 ===================================================================================
-3. Truncating and Inserting Data into: bronze.core_tm_sl
+3. Truncating and Inserting Data into: bronze.core_tm_sl_aggregates
 ===================================================================================
 */
 		SET @start_time = GETDATE();
-		PRINT '>> Truncating Table: bronze.core_tm_sl';
+		PRINT '>> Truncating Table: bronze.core_tm_sl_aggregates';
 		
-		TRUNCATE TABLE bronze.core_tm_sl;
+		TRUNCATE TABLE bronze.core_tm_sl_aggregates;
 
-		PRINT '>> Inserting Data into: bronze.core_tm_sl';
-		BULK INSERT bronze.core_tm_sl
-		FROM 'C:\Drive\3. Data Engineering\4. Finance Data Warehouse\csv files\core\tm_sl.csv'
+		PRINT '>> Inserting Data into: bronze.core_tm_sl_aggregates';
+		BULK INSERT bronze.core_tm_sl_aggregates
+		FROM 'C:\Drive\3. Data Engineering\4. Finance Data Warehouse\csv files\core\tm_sl_aggregates.csv'
 		WITH (
+			FORMAT = 'CSV',
 			FIRSTROW = 2,
 			FIELDTERMINATOR = ',',
 			ROWTERMINATOR = '0x0a'
