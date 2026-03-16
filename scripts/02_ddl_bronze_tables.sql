@@ -58,9 +58,8 @@ IF OBJECT_ID('bronze.core_tm_sl_aggregates', 'U') IS NOT NULL
 
 CREATE TABLE bronze.core_tm_sl_aggregates(
 	transaction_posting_date DATE,
-	transaction_code NVARCHAR(100),
-	total_amount_dr DECIMAL(18, 2),
-	total_amount_cr DECIMAL(18, 2),
-	reversal_flag_0 DECIMAL(18, 2),
-	reversal_flag_1 DECIMAL(18, 2)
+	transaction_type_code NVARCHAR(100),
+	transaction_category NVARCHAR(5),
+	transaction_reversal_flag NVARCHAR(5),
+	transaction_total_amount DECIMAL(18, 2),
 );
