@@ -74,7 +74,6 @@ BEGIN
         document_number,
         document_type,
         document_type_description,
-        is_reversal,
         document_date,
         posting_date,
         is_prior_period_adjustment,
@@ -113,12 +112,8 @@ BEGIN
             WHEN document_type = 'WE' THEN 'Goods Receipt'
             WHEN document_type = 'RE' THEN 'MIR7 - Park'
             WHEN document_type = 'KA' THEN 'Reversal - Vendor Invoice'
-            ELSE 'Unknown'
+            ELSE 'N/A'
         END AS document_type_description,
-
-	    CASE WHEN document_type IN ('AB', 'KA') THEN 'Yes'
-		    ELSE 'No'
-	    END AS is_reversal,
 
         document_date,
         posting_date,
@@ -144,22 +139,35 @@ BEGIN
         profit_center,
         cost_center,
         
-        CASE WHEN account = '2121199' 
-            AND (transaction_code LIKE 'IPTKOT%' 
-            OR transaction_code LIKE 'ITMDIP%'
-            OR transaction_code LIKE 'RTMDET%')
+        CASE WHEN transaction_code LIKE 'IPTKOTCR%' OR transaction_code LIKE 'IPTKOTDR%' OR transaction_code LIKE 'ITMDIPCD%'
+            OR transaction_code LIKE 'ITMDIPCR%' OR transaction_code LIKE 'ITMDIPDR%' OR transaction_code LIKE 'RPTKBPDR%' OR
+            transaction_code LIKE 'RPTKCICR%' OR transaction_code LIKE 'RPTKCODR%' OR transaction_code LIKE 'RPTKRMCR%' OR
+            transaction_code LIKE 'RPTKSMDR%' OR transaction_code LIKE 'RTMDACCD%' OR transaction_code LIKE 'RTMDACDR%' OR
+            transaction_code LIKE 'RTMDETCD%' OR transaction_code LIKE 'RTMDETCR%' OR transaction_code LIKE 'RTMDETDR%' OR
+            transaction_code LIKE 'RTMDMDDR%' OR transaction_code LIKE 'RTMDOPCR%' OR transaction_code LIKE 'RTMDOPDR%' OR
+            transaction_code LIKE 'RVDCOPDR%'
+       
             THEN LEFT(transaction_code, LEN(transaction_code)-1)
             ELSE transaction_code
         END AS transaction_code,
 
-        CASE WHEN (transaction_code LIKE 'IPTKOT%'
-            OR transaction_code LIKE 'ITMDIP%'
-            OR transaction_code LIKE 'RTMDET%')
+        CASE WHEN (transaction_code LIKE 'IPTKOTCR%' OR transaction_code LIKE 'IPTKOTDR%' OR transaction_code LIKE 'ITMDIPCD%'
+            OR transaction_code LIKE 'ITMDIPCR%' OR transaction_code LIKE 'ITMDIPDR%' OR transaction_code LIKE 'RPTKBPDR%' OR
+            transaction_code LIKE 'RPTKCICR%' OR transaction_code LIKE 'RPTKCODR%' OR transaction_code LIKE 'RPTKRMCR%' OR
+            transaction_code LIKE 'RPTKSMDR%' OR transaction_code LIKE 'RTMDACCD%' OR transaction_code LIKE 'RTMDACDR%' OR
+            transaction_code LIKE 'RTMDETCD%' OR transaction_code LIKE 'RTMDETCR%' OR transaction_code LIKE 'RTMDETDR%' OR
+            transaction_code LIKE 'RTMDMDDR%' OR transaction_code LIKE 'RTMDOPCR%' OR transaction_code LIKE 'RTMDOPDR%' OR
+            transaction_code LIKE 'RVDCOPDR%')
             AND RIGHT(transaction_code, 1) = '1' THEN 'Yes'
-            WHEN (transaction_code LIKE 'IPTKOT%'
-            OR transaction_code LIKE 'ITMDIP%'
-            OR transaction_code LIKE 'RTMDET%')
-            AND RIGHT(transaction_code, 0) = '0' THEN 'No'
+            
+            WHEN (transaction_code LIKE 'IPTKOTCR%' OR transaction_code LIKE 'IPTKOTDR%' OR transaction_code LIKE 'ITMDIPCD%'
+            OR transaction_code LIKE 'ITMDIPCR%' OR transaction_code LIKE 'ITMDIPDR%' OR transaction_code LIKE 'RPTKBPDR%' OR
+            transaction_code LIKE 'RPTKCICR%' OR transaction_code LIKE 'RPTKCODR%' OR transaction_code LIKE 'RPTKRMCR%' OR
+            transaction_code LIKE 'RPTKSMDR%' OR transaction_code LIKE 'RTMDACCD%' OR transaction_code LIKE 'RTMDACDR%' OR
+            transaction_code LIKE 'RTMDETCD%' OR transaction_code LIKE 'RTMDETCR%' OR transaction_code LIKE 'RTMDETDR%' OR
+            transaction_code LIKE 'RTMDMDDR%' OR transaction_code LIKE 'RTMDOPCR%' OR transaction_code LIKE 'RTMDOPDR%' OR
+            transaction_code LIKE 'RVDCOPDR%')
+            AND RIGHT(transaction_code, 1) = '0' THEN 'No'
             ELSE NULL
         END AS is_deposit_reversal,
 
@@ -193,41 +201,46 @@ BEGIN
 	PRINT '>> Inserting Data into: silver.core_tm_sl_aggregates';
 
 
-
 INSERT INTO silver.core_tm_sl_aggregates(
     transaction_posting_date,
-    transaction_code,
-    total_amount_dr,
-    total_amount_cr,
-    reversal_flag_0,
-    reversal_flag_1,
-    is_dr_cr_balanced,
+    transaction_type_code,
+    transaction_category,
+    transaction_reversal_flag,
+    tm_amount_dr,
+    tm_amount_cr,
     dwh_source_file
 )
 
-
 SELECT  
     transaction_posting_date,
-    transaction_code,
-    total_amount_dr,
-    total_amount_cr,
-    reversal_flag_0,
-    reversal_flag_1,
+    transaction_type_code,
 
-    CASE WHEN total_amount_dr = total_amount_cr THEN 'Yes'
-        ELSE 'No'
-    END AS is_dr_cr_balanced,
+    -- remove transaction category and replace with text
+    CASE WHEN transaction_category = '0' THEN 'Debit'
+        WHEN transaction_category = '1' THEN 'Credit'
+        ELSE NULL
+    END AS transaction_category,
+
+    CASE WHEN transaction_reversal_flag = '0' THEN 'Normal'
+        WHEN transaction_reversal_flag = '1' THEN 'Reversal'
+        ELSE NULL
+    END AS transaction_reversal_flag,
+    -- transaction amount: separate into dr & cr
+    CASE WHEN transaction_category = '0' THEN transaction_total_amount
+        ELSE NULL
+    END AS tm_amount_dr,
+    CASE WHEN transaction_category = '1' THEN transaction_total_amount
+        ELSE NULL
+    END AS tm_amount_cr,
+
     'tm_sl_aggregates.csv' AS dwh_source_file
-
 
 
 FROM bronze.core_tm_sl_aggregates
 WHERE transaction_posting_date IS NOT NULL AND transaction_posting_date > '2020-01-01' AND transaction_posting_date < GETDATE()
-  AND transaction_code IS NOT NULL
-  AND total_amount_dr IS NOT NULL AND total_amount_dr >= 0
-  AND total_amount_cr IS NOT NULL AND total_amount_cr >= 0 
-  AND reversal_flag_0 IS NOT NULL AND reversal_flag_0 >= 0
-  AND reversal_flag_1 IS NOT NULL AND reversal_flag_1 >= 0
+  AND transaction_type_code IS NOT NULL
+ORDER BY transaction_posting_date
+
 
 SET @end_time = GETDATE();
 		PRINT '>> Load Duration: ' + CAST(DATEDIFF(second, @start_time, @end_time) AS NVARCHAR) + ' seconds';
