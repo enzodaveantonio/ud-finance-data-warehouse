@@ -41,10 +41,9 @@ CREATE TABLE silver.erp_sap_je(
 	document_number NVARCHAR(50),
 	document_type NVARCHAR(10),
 	document_type_description NVARCHAR(100),
-	is_reversal NVARCHAR(5),
 	document_date DATE,
 	posting_date DATE,
-	is_prior_period_adjustment NVARCHAR(5),
+	is_prior_period_adjustment NVARCHAR(10),
 	reference_key_3 NVARCHAR(50),
 	amount_dr DECIMAL(18, 2),
 	amount_cr DECIMAL(18, 2),
@@ -72,17 +71,11 @@ IF OBJECT_ID('silver.core_tm_sl_aggregates', 'U') IS NOT NULL
 
 CREATE TABLE silver.core_tm_sl_aggregates(
 	transaction_posting_date DATE,
-	transaction_code NVARCHAR(100),
-	total_amount_dr DECIMAL(18, 2),
-	total_amount_cr DECIMAL(18, 2),
-	reversal_flag_0 DECIMAL(18, 2),
-	reversal_flag_1 DECIMAL(18, 2),
-	is_dr_cr_balanced NVARCHAR(10),
+	transaction_type_code NVARCHAR(100),
+	transaction_category NVARCHAR(20),
+	transaction_reversal_flag NVARCHAR(20),
+	tm_amount_dr DECIMAL(18, 2),
+	tm_amount_cr DECIMAL(18, 2),
 	dwh_create_date DATETIME2 DEFAULT GETDATE(),
     dwh_source_file NVARCHAR(255)
 );
-
-USE UDFinanceWarehouse
-
-
-
