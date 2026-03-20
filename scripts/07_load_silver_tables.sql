@@ -26,7 +26,7 @@ Script Purpose:
     - Populates dwh_source_file metadata column for audit trail.
 
 Scope:
-    Deposits Reconciliation (Account 2121199) only.
+    Deposits Reconciliation only.
     Bank Reconciliation tables are not yet included in this version.
 
 Usage:
