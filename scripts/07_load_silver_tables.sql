@@ -10,12 +10,18 @@ Script Purpose:
     - Inserts validated TM SL Aggregates data from
       bronze.core_tm_sl_aggregates into silver.core_tm_sl_aggregates.
     - Applies the following transformations:
-        >> Standardizes cleared_open_items_symbol to readable labels
-        >> Converts amount_in_local_currency from NVARCHAR to DECIMAL
-        >> Adds document_type_description based on SAP document type codes
-        >> Adds is_reversal flag (Yes/No)
-        >> Adds is_prior_period_adjustment flag (Yes/No)
-        >> Adds is_dr_cr_balanced flag (Yes/No) for TM SL aggregates
+        >> SAP Transformations:
+           - Standardizes cleared_open_items_symbol to readable labels
+           - Converts amount_in_local_currency from NVARCHAR to DECIMAL
+           - Splits amounts into amount_dr and amount_cr columns
+           - Adds document_type_description based on SAP document type codes
+           - Adds is_deposit_reversal flag (Reversal/Normal/NULL)
+           - Adds is_prior_period_adjustment flag (Yes/No)
+           - Strips trailing reversal indicator (0 or 1) from transaction_code
+        >> TM Transformations:
+           - Converts transaction_category codes (0/1) to labels (Debit/Credit)
+           - Converts transaction_reversal_flag codes (0/1) to labels (Normal/Reversal)
+           - Splits transaction_total_amount into tm_amount_dr and tm_amount_cr
     - Filters out rows with NULL values in critical columns.
     - Populates dwh_source_file metadata column for audit trail.
 
@@ -30,12 +36,15 @@ Usage:
 ================================================================================
 */
 
-/*
-============================================================
-1. Insert the transformed, cleansed, & normalized data into 'silver.erp_sap_je'
-Transformations: amount conversion, document type classification, reversal flag, prior period adjustment flag
-============================================================
+/* 
+TABLE OF CONTENTS
+1. Loading the Silver Layer and Getting the Batch Start/End Time
+2. Truncating and Inserting Data into: 'silver.erp_sap_je'
+3. Truncating and Inserting Data into: 'silver.core_tm_sl_aggregates'
+
 */
+
+
 
 CREATE OR ALTER PROCEDURE silver.load_silver AS
 
@@ -158,7 +167,7 @@ BEGIN
             transaction_code LIKE 'RTMDETCD%' OR transaction_code LIKE 'RTMDETCR%' OR transaction_code LIKE 'RTMDETDR%' OR
             transaction_code LIKE 'RTMDMDDR%' OR transaction_code LIKE 'RTMDOPCR%' OR transaction_code LIKE 'RTMDOPDR%' OR
             transaction_code LIKE 'RVDCOPDR%')
-            AND RIGHT(transaction_code, 1) = '1' THEN 'Yes'
+            AND RIGHT(transaction_code, 1) = '1' THEN 'Reversal'
             
             WHEN (transaction_code LIKE 'IPTKOTCR%' OR transaction_code LIKE 'IPTKOTDR%' OR transaction_code LIKE 'ITMDIPCD%'
             OR transaction_code LIKE 'ITMDIPCR%' OR transaction_code LIKE 'ITMDIPDR%' OR transaction_code LIKE 'RPTKBPDR%' OR
@@ -167,7 +176,7 @@ BEGIN
             transaction_code LIKE 'RTMDETCD%' OR transaction_code LIKE 'RTMDETCR%' OR transaction_code LIKE 'RTMDETDR%' OR
             transaction_code LIKE 'RTMDMDDR%' OR transaction_code LIKE 'RTMDOPCR%' OR transaction_code LIKE 'RTMDOPDR%' OR
             transaction_code LIKE 'RVDCOPDR%')
-            AND RIGHT(transaction_code, 1) = '0' THEN 'No'
+            AND RIGHT(transaction_code, 1) = '0' THEN 'Normal'
             ELSE NULL
         END AS is_deposit_reversal,
 
@@ -189,7 +198,7 @@ BEGIN
 
 /*
 ===================================================================================
-3. Truncating and Inserting Data into: silver.core_tm_sl_aggregates
+3. Truncating and Inserting Data into: 'silver.core_tm_sl_aggregates'
 ===================================================================================
 */
 
