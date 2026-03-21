@@ -147,18 +147,7 @@ BEGIN
         je_text,
         profit_center,
         cost_center,
-        
-        CASE WHEN transaction_code LIKE 'IPTKOTCR%' OR transaction_code LIKE 'IPTKOTDR%' OR transaction_code LIKE 'ITMDIPCD%'
-            OR transaction_code LIKE 'ITMDIPCR%' OR transaction_code LIKE 'ITMDIPDR%' OR transaction_code LIKE 'RPTKBPDR%' OR
-            transaction_code LIKE 'RPTKCICR%' OR transaction_code LIKE 'RPTKCODR%' OR transaction_code LIKE 'RPTKRMCR%' OR
-            transaction_code LIKE 'RPTKSMDR%' OR transaction_code LIKE 'RTMDACCD%' OR transaction_code LIKE 'RTMDACDR%' OR
-            transaction_code LIKE 'RTMDETCD%' OR transaction_code LIKE 'RTMDETCR%' OR transaction_code LIKE 'RTMDETDR%' OR
-            transaction_code LIKE 'RTMDMDDR%' OR transaction_code LIKE 'RTMDOPCR%' OR transaction_code LIKE 'RTMDOPDR%' OR
-            transaction_code LIKE 'RVDCOPDR%'
-       
-            THEN LEFT(transaction_code, LEN(transaction_code)-1)
-            ELSE transaction_code
-        END AS transaction_code,
+        transaction_code,
 
         CASE WHEN (transaction_code LIKE 'IPTKOTCR%' OR transaction_code LIKE 'IPTKOTDR%' OR transaction_code LIKE 'ITMDIPCD%'
             OR transaction_code LIKE 'ITMDIPCR%' OR transaction_code LIKE 'ITMDIPDR%' OR transaction_code LIKE 'RPTKBPDR%' OR
@@ -222,7 +211,11 @@ INSERT INTO silver.core_tm_sl_aggregates(
 
 SELECT  
     transaction_posting_date,
-    transaction_type_code,
+    
+    CASE WHEN transaction_reversal_flag = '0' THEN transaction_type_code + '0'
+        WHEN transaction_reversal_flag = '1' THEN transaction_type_code + '1'
+        ELSE transaction_type_code
+    END AS transaction_type_code,
 
     -- remove transaction category and replace with text
     CASE WHEN transaction_category = '0' THEN 'Debit'
@@ -255,7 +248,7 @@ SET @end_time = GETDATE();
 		PRINT '>> Load Duration: ' + CAST(DATEDIFF(second, @start_time, @end_time) AS NVARCHAR) + ' seconds';
 		PRINT '==========================================================================';
 
-		SET @batch_end_time = GETDATE();
+	SET @batch_end_time = GETDATE();
 		PRINT '==========================================================================';
 		PRINT 'Loading the Silver Layer is Complete.';
 		PRINT 'Total Load Duration: ' + CAST(DATEDIFF(second, @batch_start_time, @batch_end_time) AS NVARCHAR) + ' seconds';
@@ -270,4 +263,3 @@ SET @end_time = GETDATE();
 		PRINT '==========================================================================';
 	END CATCH
 END
-
