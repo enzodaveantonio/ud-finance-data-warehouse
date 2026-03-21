@@ -196,7 +196,7 @@ PRINT '=========================================================================
 
 	SET @batch_end_time = GETDATE();
 		PRINT '==========================================================================';
-		PRINT 'Loading the Silver Layer is Complete.';
+		PRINT 'Loading the Gold Layer is Complete.';
 		PRINT 'Total Load Duration: ' + CAST(DATEDIFF(second, @batch_start_time, @batch_end_time) AS NVARCHAR) + ' seconds';
 		PRINT '==========================================================================';
 	END TRY
